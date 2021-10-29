@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "todo-dearpy"
+version = "0.1.0"
+description = ""
+authors = ["Christopher Chen <christopher.chen1995@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+dearpygui = "^1.0.2"
+
+[tool.poetry.dev-dependencies]
+black = {version = "^21.9b0", allow-prereleases = true}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
