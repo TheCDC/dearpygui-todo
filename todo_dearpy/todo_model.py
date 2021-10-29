@@ -18,6 +18,9 @@ class TodoService:
     def delete(self, index: int):
         self.__items.remove(index)
 
+    def toggle(self, index: int):
+        self.items[index].done = not self.items[index].done
+
     @property
     def items(self):
         return self.__items

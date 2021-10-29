@@ -1,7 +1,42 @@
+from typing import Callable
 import dearpygui.dearpygui as dpg
 from dataclasses import dataclass
 
-from todo_dearpy.toto_model import TodoItem
+from todo_dearpy.todo_model import TodoService, TodoItem
+
+
+class Listbox_TodoManager:
+    def __init__(
+        self, payload=None, render_format: Callable[[int, object], str] = None
+    ) -> None:
+        payload = payload if payload else []
+        self.render_format = (
+            render_format
+            if render_format
+            else lambda index, item: f"[{'x' if item.done else ' '}] {str(item)}"
+        )
+        self.service = TodoService()
+        for p in payload:
+            self.service.add(p, False)
+
+    def clicked(self, sender, app_data: str, user_data):
+        onscreen_string = app_data
+        index = int(onscreen_string.split()[0])
+        self.service.toggle(index)
+        dpg.configure_item(sender, items=list(self))
+
+    def add(self, sender, app_data: str, user_data):
+        self.service.add(app_data)
+
+    def refresh_ui(self):
+        dpg.configure_item(sender, items=list(self))
+        pass
+
+    def __iter__(self):
+
+        for index, item in enumerate(self.service.items):
+
+            yield f"{index} {self.render_format(index, item)}"
 
 
 class ListboxItem_TodoItem:
@@ -81,6 +116,18 @@ with dpg.window(label="Tutorial") as w1:
         num_items=10,
         # user_data=DATA,
         callback=ListboxItem_TodoItem.click,
+        source=string_value,
+    )
+    lbtdm = Listbox_TodoManager(
+        fruits,
+        render_format=lambda index, item: f"{'YEET' if item.done else 'NAW'} {item.name}",
+    )
+    lb2 = dpg.add_listbox(
+        list(lbtdm),
+        label="Todos",
+        num_items=10,
+        # user_data=DATA,
+        callback=lbtdm.clicked,
         source=string_value,
     )
 dpg.set_primary_window(w1, True)
