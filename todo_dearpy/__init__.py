@@ -6,6 +6,11 @@ from todo_dearpy.todo_model import TodoService, TodoItem
 
 
 class Listbox_TodoManager:
+    def _wrap_pre_post(self, method, args, kwargs):
+        res = method(*args, **kwargs)
+        self.refresh_ui()
+        return res
+
     def __init__(
         self, payload=None, render_format: Callable[[int, object], str] = None
     ) -> None:
@@ -18,10 +23,28 @@ class Listbox_TodoManager:
         self.service = TodoService()
         for p in payload:
             self.service.add(p, False)
+        self.__init_ui()
+
+    def __init_ui(self):
+
+        dpg.add_listbox(
+            list(self),
+            label="Todos",
+            num_items=10,
+            # user_data=DATA,
+            callback=self.clicked,
+        )
+
+    def encode_index(self, index: int, s: str):
+        return f"{index} {s}"
+
+    def decode_index(self, s: str):
+        return int(s.split()[0])
 
     def clicked(self, sender, app_data: str, user_data):
         onscreen_string = app_data
         index = int(onscreen_string.split()[0])
+        index = self.decode_index(onscreen_string)
         self.service.toggle(index)
         dpg.configure_item(sender, items=list(self))
 
@@ -35,8 +58,7 @@ class Listbox_TodoManager:
     def __iter__(self):
 
         for index, item in enumerate(self.service.items):
-
-            yield f"{index} {self.render_format(index, item)}"
+            yield self.encode_index(index, self.render_format(index, item))
 
 
 class ListboxItem_TodoItem:
@@ -121,14 +143,6 @@ with dpg.window(label="Tutorial") as w1:
     lbtdm = Listbox_TodoManager(
         fruits,
         render_format=lambda index, item: f"{'YEET' if item.done else 'NAW'} {item.name}",
-    )
-    lb2 = dpg.add_listbox(
-        list(lbtdm),
-        label="Todos",
-        num_items=10,
-        # user_data=DATA,
-        callback=lbtdm.clicked,
-        source=string_value,
     )
 dpg.set_primary_window(w1, True)
 dpg.show_viewport()
