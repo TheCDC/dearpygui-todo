@@ -3,6 +3,7 @@ import dearpygui.dearpygui as dpg
 from dataclasses import dataclass
 
 from todo_dearpy.todo_model import TodoService, TodoItem
+import random
 
 
 class Listbox_TodoManager:
@@ -12,7 +13,7 @@ class Listbox_TodoManager:
         return res
 
     def __init__(
-        self, payload=None, render_format: Callable[[int, object], str] = None
+        self, payload=None, render_format: Callable[[int, TodoItem], str] = None
     ) -> None:
         payload = payload if payload else []
         self.render_format = (
@@ -21,19 +22,28 @@ class Listbox_TodoManager:
             else lambda index, item: f"[{'x' if item.done else ' '}] {str(item)}"
         )
         self.service = TodoService()
-        for p in payload:
-            self.service.add(p, False)
-        self.__init_ui()
+        self.ui_element_id = None
 
-    def __init_ui(self):
-
-        dpg.add_listbox(
+    def initialize(self):
+        self.ui_element_id = dpg.add_listbox(
             list(self),
             label="Todos",
             num_items=10,
             # user_data=DATA,
             callback=self.clicked,
         )
+        self.button1_id = dpg.add_button(
+            label="test", callback=lambda *args: print(self.service.json())
+        )
+
+        self.button2_id = dpg.add_button(label="save", callback=self.save)
+        self.button3_id = dpg.add_button(
+            label="add new",
+            callback=lambda: self.add(None, str(random.randint(1, 1000)), None),
+        )
+
+    def save(self, *args):
+        self.service.save()
 
     def encode_index(self, index: int, s: str):
         return f"{index} {s}"
@@ -46,14 +56,15 @@ class Listbox_TodoManager:
         index = int(onscreen_string.split()[0])
         index = self.decode_index(onscreen_string)
         self.service.toggle(index)
-        dpg.configure_item(sender, items=list(self))
+        self.refresh_ui()
 
     def add(self, sender, app_data: str, user_data):
         self.service.add(app_data)
+        self.refresh_ui()
 
     def refresh_ui(self):
-        dpg.configure_item(sender, items=list(self))
-        pass
+        if self.ui_element_id:
+            dpg.configure_item(self.ui_element_id, items=list(self))
 
     def __iter__(self):
 
@@ -131,19 +142,20 @@ def log(sender, app_data, user_data):
 with dpg.value_registry():
     bool_value = dpg.add_bool_value(default_value=True)
     string_value = dpg.add_string_value(default_value="Default string")
+lbtdm = Listbox_TodoManager(
+    None,
+    render_format=lambda index, item: f"{'YEET' if item.done else 'NAW'} {item.name}",
+)
 with dpg.window(label="Tutorial") as w1:
     lb1 = dpg.add_listbox(
-        DATA,
+        [str(i) for i in DATA],
         label="Todos",
         num_items=10,
         # user_data=DATA,
         callback=ListboxItem_TodoItem.click,
         source=string_value,
     )
-    lbtdm = Listbox_TodoManager(
-        fruits,
-        render_format=lambda index, item: f"{'YEET' if item.done else 'NAW'} {item.name}",
-    )
+    lbtdm.initialize()
 dpg.set_primary_window(w1, True)
 dpg.show_viewport()
 dpg.start_dearpygui()
