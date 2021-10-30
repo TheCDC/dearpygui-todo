@@ -37,6 +37,9 @@ class TodoService:
         with open(self.db_path, "w") as f:
             json.dump([asdict(i) for i in self.__items], f)
 
+    def get(self, index: int):
+        return self.items[index]
+
     @property
     def items(self):
         return self.__items
