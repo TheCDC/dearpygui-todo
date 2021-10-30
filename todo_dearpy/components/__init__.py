@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, List
 import random
 from todo_dearpy.services.todo_model import TodoItem, TodoService
 from todo_dearpy.ui.base import ComponentBase
@@ -47,7 +47,7 @@ class Listbox_TodoManager(ComponentBase):
         ):
             self.ui_element_id = dpg.add_listbox(
                 list(self),
-                num_items=32,
+                num_items=10,
                 callback=self.clicked,
                 drag_callback=lambda s, a, u: print("drag", s, a, u),
                 drop_callback=lambda s, a, u: print("drop", s, a, u),
@@ -120,15 +120,35 @@ class Table_TodoManager(ComponentBase):
         self.ui_element_id = None
 
     def initialize(self):
-        with dpg.table(callback=lambda s, a, u: print(s, a, u)):
-            dpg.add_table_column()
-            dpg.add_table_column()
-            dpg.add_table_column()
-            for item in self.service.items:
+        self.cells: List[int] = []
+        with dpg.group(horizontal=True):
+            tag_add_item = dpg.generate_uuid()
+            dpg.add_button(
+                label="Add",
+                callback=lambda s, a, u: self.add(s, dpg.get_value(tag_add_item), u),
+            )
+            dpg.add_input_text(label="New Task", tag=tag_add_item)
+        self.tag_table = dpg.generate_uuid()
+
+        with dpg.table(tag=self.tag_table, callback=lambda s, a, u: print(s, a, u)):
+            dpg.add_table_column(
+                label="Done", width_stretch=False, width=0, width_fixed=True
+            )
+            dpg.add_table_column(label="Content", width_stretch=True)
+            dpg.add_table_column(
+                label="Actions", width_stretch=False, width=0, width_fixed=True
+            )
+            for index_item, item in enumerate(self.service.items):
                 with dpg.table_row():
                     dpg.add_button(label=f"{item.done}")
                     dpg.add_text(item.name)
-                    dpg.add_button(label="x")
+                    with dpg.table_cell():
+                        with dpg.group(horizontal=True):
+                            dpg.add_button(label="delete")
+                            dpg.add_button(label="archive")
+
+    def _get_tag(self, index):
+        return
 
     def save(self, *args):
         self.service.save()
@@ -140,22 +160,12 @@ class Table_TodoManager(ComponentBase):
         return int(s.split()[0])
 
     @ComponentBase.callback_requires_refresh
-    def clicked(self, sender, app_data: str, user_data):
-        onscreen_string = app_data
-        index = self.decode_index(onscreen_string)
-        self.service.toggle(index)
-        dpg.set_value(self.ui_element_id, self.render(index, self.service.get(index)))
-
-    @ComponentBase.callback_requires_refresh
     def add(self, sender, app_data: str, user_data):
         self.service.add(app_data)
 
     def refresh_ui(self):
-        if self.ui_element_id:
-            dpg.configure_item(self.ui_element_id, items=list(self))
-
-    def render(self, index, item):
-        return self.encode_index(index, self.render_format(index, item))
+        if self.tag_table:
+            pass
 
     def __iter__(self):
 
