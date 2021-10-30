@@ -118,34 +118,66 @@ class Table_TodoManager(ComponentBase):
         )
         self.service = TodoService()
         self.ui_element_id = None
+        self.rows = []
 
     def initialize(self):
         self.cells: List[int] = []
+        with dpg.group(horizontal=True):
+            dpg.add_button(label="Save", callback=self.save)
         with dpg.group(horizontal=True):
             tag_add_item = dpg.generate_uuid()
             dpg.add_button(
                 label="Add",
                 callback=lambda s, a, u: self.add(s, dpg.get_value(tag_add_item), u),
             )
-            dpg.add_input_text(label="New Task", tag=tag_add_item)
+            dpg.add_input_text(
+                label="New Task",
+                tag=tag_add_item,
+                callback=lambda s, a, y: print(s, a, y),
+            )
+
         self.tag_table = dpg.generate_uuid()
 
         with dpg.table(tag=self.tag_table, callback=lambda s, a, u: print(s, a, u)):
             dpg.add_table_column(
-                label="Done", width_stretch=False, width=0, width_fixed=True
+                parent=self.tag_table,
+                label="Done",
+                width_stretch=False,
+                width=0,
+                width_fixed=True,
             )
-            dpg.add_table_column(label="Content", width_stretch=True)
             dpg.add_table_column(
-                label="Actions", width_stretch=False, width=0, width_fixed=True
+                parent=self.tag_table, label="Content", width_stretch=True
             )
-            for index_item, item in enumerate(self.service.items):
-                with dpg.table_row():
-                    dpg.add_button(label=f"{item.done}")
-                    dpg.add_text(item.name)
-                    with dpg.table_cell():
-                        with dpg.group(horizontal=True):
-                            dpg.add_button(label="delete")
-                            dpg.add_button(label="archive")
+            dpg.add_table_column(
+                parent=self.tag_table,
+                label="Actions",
+                width_stretch=False,
+                width=0,
+                width_fixed=True,
+            )
+
+        self.refresh_ui()
+
+    def render_tree(self):
+        while len(self.rows) > 0:
+            row_to_delete = self.rows[-1]
+            dpg.delete_item(row_to_delete)
+            del self.rows[-1]
+
+        for index_item, item in enumerate(self.service.items):
+            with dpg.table_row(parent=self.tag_table) as row:
+                self.rows.append(row)
+                dpg.add_button(
+                    label=f"{'[ x ]' if  item.done else '[   ]'}",
+                    callback=lambda s, a, u: self.click(s, a, u),
+                    user_data=index_item,
+                )
+                dpg.add_text(item.name)
+                with dpg.table_cell():
+                    with dpg.group(horizontal=True):
+                        dpg.add_button(label="delete")
+                        dpg.add_button(label="archive")
 
     def _get_tag(self, index):
         return
@@ -165,7 +197,11 @@ class Table_TodoManager(ComponentBase):
 
     def refresh_ui(self):
         if self.tag_table:
-            pass
+            self.render_tree()
+
+    @ComponentBase.callback_requires_refresh
+    def click(self, s, a, u):
+        self.service.toggle(u)
 
     def __iter__(self):
 
