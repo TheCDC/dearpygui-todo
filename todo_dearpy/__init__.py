@@ -1,7 +1,7 @@
 from typing import Callable
 import dearpygui.dearpygui as dpg
 from dataclasses import dataclass
-from todo_dearpy.components import Listbox_TodoManager
+from todo_dearpy.components import Listbox_TodoManager, Table_TodoManager
 
 from todo_dearpy.services.todo_model import TodoService, TodoItem
 import random
@@ -40,15 +40,18 @@ lbtdm = Listbox_TodoManager(
     render_format=lambda index, item: f"{'[ x ]' if item.done else '[   ]'} {item.name}",
 )
 
+table_todos = Table_TodoManager()
+
 with dpg.value_registry():
     bool_value = dpg.add_bool_value(default_value=True)
     string_value = dpg.add_string_value(default_value="Default string")
 with dpg.window(label="Tutorial") as w1:
-    lbtdm.initialize()
+    with dpg.group(horizontal=False):
+        lbtdm.initialize()
+        table_todos.initialize()
 dpg.set_primary_window(w1, True)
 dpg.create_viewport(
     title="Custom Title",
-    width=300,
 )
 dpg.show_viewport()
 dpg.start_dearpygui()

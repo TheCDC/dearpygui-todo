@@ -99,3 +99,65 @@ class Listbox_TodoManager(ComponentBase):
 
         for index, item in enumerate(self.service.items):
             yield self.render(index, item)
+
+
+class Table_TodoManager(ComponentBase):
+    def _wrap_pre_post(self, method, args, kwargs):
+        res = method(*args, **kwargs)
+        self.refresh_ui()
+        return res
+
+    def __init__(
+        self, payload=None, render_format: Callable[[int, TodoItem], str] = None
+    ) -> None:
+        payload = payload if payload else []
+        self.render_format = (
+            render_format
+            if render_format
+            else lambda index, item: f"[{'x' if item.done else ' '}] {str(item)}"
+        )
+        self.service = TodoService()
+        self.ui_element_id = None
+
+    def initialize(self):
+        with dpg.table(callback=lambda s, a, u: print(s, a, u)):
+            dpg.add_table_column()
+            dpg.add_table_column()
+            dpg.add_table_column()
+            for item in self.service.items:
+                with dpg.table_row():
+                    dpg.add_button(label=f"{item.done}")
+                    dpg.add_text(item.name)
+                    dpg.add_button(label="x")
+
+    def save(self, *args):
+        self.service.save()
+
+    def encode_index(self, index: int, s: str):
+        return f"{index} {s}"
+
+    def decode_index(self, s: str):
+        return int(s.split()[0])
+
+    @ComponentBase.callback_requires_refresh
+    def clicked(self, sender, app_data: str, user_data):
+        onscreen_string = app_data
+        index = self.decode_index(onscreen_string)
+        self.service.toggle(index)
+        dpg.set_value(self.ui_element_id, self.render(index, self.service.get(index)))
+
+    @ComponentBase.callback_requires_refresh
+    def add(self, sender, app_data: str, user_data):
+        self.service.add(app_data)
+
+    def refresh_ui(self):
+        if self.ui_element_id:
+            dpg.configure_item(self.ui_element_id, items=list(self))
+
+    def render(self, index, item):
+        return self.encode_index(index, self.render_format(index, item))
+
+    def __iter__(self):
+
+        for index, item in enumerate(self.service.items):
+            yield self.render(index, item)
