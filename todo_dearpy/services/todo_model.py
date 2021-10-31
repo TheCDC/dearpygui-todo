@@ -24,7 +24,7 @@ class TodoService:
             self.save()
 
     def add(self, name: str, done: bool = False):
-        self.__items.append(TodoItem(name, done))
+        self.__items.insert(0, TodoItem(name, done))
 
     def delete(self, index: int):
         del self.__items[index]

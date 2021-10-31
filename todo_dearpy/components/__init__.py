@@ -138,8 +138,8 @@ class Table_TodoManager(ComponentBase):
             dpg.add_table_column(
                 parent=self.tag_table,
                 label="",
-                width_stretch=False,
-                width=0,
+                # width_stretch=True,
+                width=32,
                 width_fixed=True,
             )
             dpg.add_table_column(
@@ -172,23 +172,29 @@ class Table_TodoManager(ComponentBase):
             with dpg.table_row(parent=self.tag_table) as row:
                 self.rows.append(row)
                 with dpg.table_cell():
-                    item_drag_handle = dpg.add_text(
-                        "-",
-                        drag_callback=self.drag_item,
+                    with dpg.group(
                         drop_callback=self.drop_item,
                         user_data=index_item,
-                    )
-                    with dpg.drag_payload(
-                        parent=item_drag_handle,
-                        drag_data=index_item,
-                        drop_data=index_item,
-                        user_data=index_item,
-                    ):
-                        dpg.add_text(index_item)
-                        dpg.add_text(
-                            self.service.get(index_item),
-                            # user_data=index_item,
-                        )
+                        drag_callback=self.drag_item,
+                    ) as group_drag:
+                        h = 16
+                        w = 16
+                        with dpg.drawlist(width=w, height=h):
+                            # dpg.draw_quad((0, 0), (0, h), (w, h), (w, 0))
+                            dpg.draw_line((0, h * 3 / 8), (w, h * 3 / 8))
+                            dpg.draw_line((0, h * 4 / 8), (w, h * 4 / 8))
+                            dpg.draw_line((0, h * 5 / 8), (w, h * 5 / 8))
+                        with dpg.drag_payload(
+                            parent=group_drag,
+                            drag_data=index_item,
+                            drop_data=index_item,
+                            user_data=index_item,
+                        ):
+                            dpg.add_text(index_item)
+                            dpg.add_text(
+                                self.service.get(index_item),
+                                # user_data=index_item,
+                            )
 
                 dpg.add_button(
                     label=f"{'[ x ]' if  item.done else '[   ]'}",
@@ -231,12 +237,14 @@ class Table_TodoManager(ComponentBase):
         self.service.move(index_from, index_to)
 
     def drag_item(self, s, a, u):
-        # print(
-        #     "drag_item",
-        #     s,
-        #     a,
-        #     u,
-        # )
+        vs = [s, a, u]
+        print(*vs, end="")
+        for v in vs:
+            try:
+                print("", v, ":", dpg.get_item_user_data(v), end="")
+            except:
+                pass
+        print()
         pass
 
     @ComponentBase.callback_requires_refresh
