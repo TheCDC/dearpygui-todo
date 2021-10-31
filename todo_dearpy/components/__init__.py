@@ -181,9 +181,9 @@ class Table_TodoManager(ComponentBase):
                         w = 16
                         with dpg.drawlist(width=w, height=h):
                             # dpg.draw_quad((0, 0), (0, h), (w, h), (w, 0))
-                            dpg.draw_line((0, h * 3 / 8), (w, h * 3 / 8))
+                            dpg.draw_line((0, h * 2 / 8), (w, h * 2 / 8))
                             dpg.draw_line((0, h * 4 / 8), (w, h * 4 / 8))
-                            dpg.draw_line((0, h * 5 / 8), (w, h * 5 / 8))
+                            dpg.draw_line((0, h * 6 / 8), (w, h * 6 / 8))
                         with dpg.drag_payload(
                             parent=group_drag,
                             drag_data=index_item,
