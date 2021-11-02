@@ -1,12 +1,7 @@
-from typing import Callable
 import dearpygui.dearpygui as dpg
-from dataclasses import dataclass
-from todo_dearpy.components import Listbox_TodoManager, Table_TodoManager
 
-from todo_dearpy.services.todo_model import TodoService, TodoItem
-import random
-
-from todo_dearpy.ui.base import ComponentBase
+from todo_dearpy.components.listbox_todomanager import Listbox_TodoManager
+from todo_dearpy.components.table_todomanager import Table_TodoManager
 
 
 fruits = (
@@ -45,6 +40,7 @@ table_todos = Table_TodoManager()
 with dpg.value_registry():
     bool_value = dpg.add_bool_value(default_value=True)
     string_value = dpg.add_string_value(default_value="Default string")
+dpg.show_item_registry()
 with dpg.window(label="Table Version") as w1:
     table_todos.initialize()
 dpg.set_primary_window(w1, True)
