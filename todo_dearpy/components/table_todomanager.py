@@ -32,24 +32,21 @@ class Table_TodoManager(ComponentBase):
         self.id_window = id_window
         now = datetime.now()
 
-        with dpg.window(
-            id=self.id_popup_create,
-            modal=True,
-            show=False,
-        ) as modal:
-            dpg.add_text("modal")
-        with dpg.table(header_row=False):
-            dpg.add_table_column(width_stretch=True)
-            dpg.add_table_column(width_fixed=True)
-            dpg.add_table_column(width_fixed=True)
-            dpg.add_table_column(width_fixed=True)
-            dpg.add_table_column(width_fixed=True)
-            with dpg.table_row():
+        with dpg.window(id=self.id_popup_create, modal=True, show=False, width=300):
+
+            with dpg.group(horizontal=True):
                 tag_add_item = dpg.generate_uuid()
                 dpg.add_input_text(
                     label="New Task",
                     tag=tag_add_item,
                 )
+                dpg.add_button(
+                    label="Add",
+                    callback=lambda s, a, u: self.add(
+                        s, dpg.get_value(tag_add_item), u
+                    ),
+                )
+            with dpg.group(horizontal=True):
                 dpg.add_date_picker(
                     level=dpg.mvDatePickerLevel_Day,
                     default_value={
@@ -64,13 +61,6 @@ class Table_TodoManager(ComponentBase):
                         "min": now.minute,
                         "sec": now.second,
                     }
-                )
-                dpg.add_separator()
-                dpg.add_button(
-                    label="Add",
-                    callback=lambda s, a, u: self.add(
-                        s, dpg.get_value(tag_add_item), u
-                    ),
                 )
 
         with dpg.group(horizontal=True):
