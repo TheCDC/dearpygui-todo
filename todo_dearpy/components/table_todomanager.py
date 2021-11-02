@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Callable, List
 from todo_dearpy.services.todo_model import TodoItem, TodoService
 from todo_dearpy.ui.base import ComponentBase
@@ -24,23 +25,62 @@ class Table_TodoManager(ComponentBase):
         self.rows = []
         self.filter_id = dpg.generate_uuid()
         self.value_registry = dpg.add_value_registry()
+        self.id_popup_create = dpg.generate_uuid()
+        self.id_window = None
 
-    def initialize(self):
-        with dpg.group(horizontal=True):
-            tag_add_item = dpg.generate_uuid()
-            dpg.add_button(
-                label="Add",
-                callback=lambda s, a, u: self.add(s, dpg.get_value(tag_add_item), u),
-            )
-            dpg.add_input_text(
-                label="New Task",
-                tag=tag_add_item,
-            )
+    def initialize(self, id_window: int):
+        self.id_window = id_window
+        now = datetime.now()
+
+        with dpg.window(
+            id=self.id_popup_create,
+            modal=True,
+            show=False,
+        ) as modal:
+            dpg.add_text("modal")
+        with dpg.table(header_row=False):
+            dpg.add_table_column(width_stretch=True)
+            dpg.add_table_column(width_fixed=True)
+            dpg.add_table_column(width_fixed=True)
+            dpg.add_table_column(width_fixed=True)
+            dpg.add_table_column(width_fixed=True)
+            with dpg.table_row():
+                tag_add_item = dpg.generate_uuid()
+                dpg.add_input_text(
+                    label="New Task",
+                    tag=tag_add_item,
+                )
+                dpg.add_date_picker(
+                    level=dpg.mvDatePickerLevel_Day,
+                    default_value={
+                        "year": now.year,
+                        "month_day": now.day,
+                        "month": now.month,
+                    },
+                )
+                dpg.add_time_picker(
+                    default_value={
+                        "hour": now.hour,
+                        "min": now.minute,
+                        "sec": now.second,
+                    }
+                )
+                dpg.add_separator()
+                dpg.add_button(
+                    label="Add",
+                    callback=lambda s, a, u: self.add(
+                        s, dpg.get_value(tag_add_item), u
+                    ),
+                )
+
         with dpg.group(horizontal=True):
             dpg.add_input_text(
                 label="Filter",
                 callback=lambda s, a, u: [dpg.set_value(self.filter_id, a), print(a)],
             )
+        dpg.add_button(
+            label="Create new with popup", callback=self.callback_create_new_popup
+        )
 
         self.tag_table = dpg.generate_uuid()
 
@@ -72,8 +112,11 @@ class Table_TodoManager(ComponentBase):
 
         self.refresh_ui()
 
+    def callback_create_new_popup(self, s, a, u):
+        dpg.configure_item(self.id_popup_create, show=True)
+        pass
+
     def callback_table(self, sender, sort_specs):
-        print(sort_specs)
 
         # sort_specs scenarios:
         #   1. no sorting -> sort_specs == None

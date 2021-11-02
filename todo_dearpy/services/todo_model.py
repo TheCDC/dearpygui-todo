@@ -1,8 +1,9 @@
 from dataclasses import asdict, dataclass
 from json.decoder import JSONDecodeError
-from typing import List, Type
+from typing import List, Optional, Type
 import json
 from pathlib import Path
+from datetime import datetime
 
 
 @dataclass
@@ -10,6 +11,8 @@ class TodoItem:
     index: int
     name: str
     done: bool
+    date_due: Optional[datetime]
+    priority: Optional[int]
 
 
 class TodoService:
@@ -26,7 +29,7 @@ class TodoService:
 
     def add(self, name: str, done: bool = False):
         idx = 0
-        self.__items.insert(idx, TodoItem(idx, name, done))
+        self.__items.insert(idx, TodoItem(idx, name, done, None, 0))
         self._refresh_indices()
 
     def delete(self, index: int):

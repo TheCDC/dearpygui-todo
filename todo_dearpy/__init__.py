@@ -42,7 +42,7 @@ with dpg.value_registry():
     string_value = dpg.add_string_value(default_value="Default string")
 dpg.show_item_registry()
 with dpg.window(label="Table Version") as w1:
-    table_todos.initialize()
+    table_todos.initialize(w1)
 dpg.set_primary_window(w1, True)
 dpg.create_viewport(
     title="Custom Title",
