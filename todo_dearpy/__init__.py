@@ -45,7 +45,7 @@ with dpg.window(label="Table Version") as w1:
     table_todos.initialize(w1)
 dpg.set_primary_window(w1, True)
 dpg.create_viewport(
-    title="Custom Title",
+    title="Custom Title",width=400
 )
 dpg.show_viewport()
 dpg.start_dearpygui()

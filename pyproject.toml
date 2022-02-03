@@ -5,7 +5,7 @@ description = ""
 authors = ["Christopher Chen <christopher.chen1995@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 dearpygui = "^1.0.2"
 
 [tool.poetry.dev-dependencies]

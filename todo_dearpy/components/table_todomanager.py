@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, List
+from typing import Callable, List, Optional, Tuple
 from todo_dearpy.services.todo_model import TodoItem, TodoService
 from todo_dearpy.ui.base import ComponentBase
 import dearpygui.dearpygui as dpg
@@ -26,7 +26,9 @@ class Table_TodoManager(ComponentBase):
         self.filter_id = dpg.generate_uuid()
         self.value_registry = dpg.add_value_registry()
         self.id_popup_create = dpg.generate_uuid()
+        self.id_text_new_task = dpg.generate_uuid()
         self.id_window = None
+        self.last_sort: Optional[Tuple[str, int]] = None
 
     def initialize(self, id_window: int):
         self.id_window = id_window
@@ -35,15 +37,15 @@ class Table_TodoManager(ComponentBase):
         with dpg.window(id=self.id_popup_create, modal=True, show=False, width=300):
 
             with dpg.group(horizontal=True):
-                tag_add_item = dpg.generate_uuid()
+
                 dpg.add_input_text(
                     label="New Task",
-                    tag=tag_add_item,
+                    tag=self.id_text_new_task,
                 )
                 dpg.add_button(
                     label="Add",
                     callback=lambda s, a, u: self.add(
-                        s, dpg.get_value(tag_add_item), u
+                        s, dpg.get_value(self.id_text_new_task), u
                     ),
                 )
             with dpg.group(horizontal=True):
@@ -65,6 +67,7 @@ class Table_TodoManager(ComponentBase):
 
         with dpg.group(horizontal=True):
             dpg.add_input_text(
+                tag=self.filter_id,
                 label="Filter",
                 callback=lambda s, a, u: [dpg.set_value(self.filter_id, a), print(a)],
             )
@@ -79,6 +82,7 @@ class Table_TodoManager(ComponentBase):
             policy=dpg.mvTable_SizingFixedFit,
             callback=self.callback_table,
             sortable=True,
+            sort_multi=True,
         ):
             dpg.add_table_column(
                 parent=self.tag_table,
@@ -86,10 +90,14 @@ class Table_TodoManager(ComponentBase):
                 width_stretch=False,
                 width=0,
                 width_fixed=True,
-                no_sort=True,
+                no_sort=False,
+                user_data="done",
             )
             dpg.add_table_column(
-                parent=self.tag_table, label="Content", width_stretch=True
+                parent=self.tag_table,
+                label="Content",
+                width_stretch=True,
+                user_data="name",
             )
             dpg.add_table_column(
                 parent=self.tag_table,
@@ -107,7 +115,7 @@ class Table_TodoManager(ComponentBase):
         pass
 
     def callback_table(self, sender, sort_specs):
-
+        self.last_sort = sort_specs
         # sort_specs scenarios:
         #   1. no sorting -> sort_specs == None
         #   2. single sorting -> sort_specs == [[column_id, direction]]
@@ -120,7 +128,8 @@ class Table_TodoManager(ComponentBase):
         # no sorting case
         if sort_specs is None:
             return
-
+        sort_specs_keys = [(dpg.get_item_user_data(a), b) for a, b in sort_specs]
+        print(sort_specs_keys)
         rows = dpg.get_item_children(sender, 1)
 
         # create a list that can be sorted based on first cell
@@ -130,10 +139,12 @@ class Table_TodoManager(ComponentBase):
             content_cell = dpg.get_item_children(row, 1)[1]
             content_id = dpg.get_item_children(content_cell, 1)[0]
             v = dpg.get_item_user_data(content_id)
+            # print(sort_specs, content_cell, content_id, v)
             sortable_list.append([row, v])
+        # print(sortable_list)
 
         def _sorter(e):
-            return e[1][1].name
+            return getattr(e[1][1], sort_specs_keys[0][0])
 
         sortable_list.sort(key=_sorter, reverse=sort_specs[0][1] < 0)
 
@@ -155,12 +166,13 @@ class Table_TodoManager(ComponentBase):
                 self.rows.append(row)
                 # task status
                 with dpg.table_cell():
-                    with dpg.group():
-
+                    with dpg.group(
+                        user_data=int(item.done),
+                    ):
                         dpg.add_button(
                             label=f"{'[ x ]' if  item.done else '[   ]'}",
                             callback=lambda s, a, u: self.toggle_item(s, a, u),
-                            user_data=(index_item, item),
+                            user_data=(index_item, item.done),
                         )
                 # task content
                 with dpg.table_cell():
@@ -235,6 +247,7 @@ class Table_TodoManager(ComponentBase):
     @ComponentBase.callback_requires_refresh
     def add(self, sender, app_data: str, user_data):
         self.service.add(app_data)
+        dpg.set_value(self.id_text_new_task, "")
 
     def refresh_ui(self):
         if self.tag_table:
